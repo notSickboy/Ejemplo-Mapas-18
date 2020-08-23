@@ -2,6 +2,7 @@ package com.example.ejemplo_mapas_18
 
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -37,6 +38,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private var lista_de_marcadores: ArrayList<Marker>? = null
 
+    var contador:Int = 0
+
     // Marcadores de mMap
     private var marcador_combis_de_la_petrolera:Marker? = null
     private var marcador_bodega_aurrera:Marker? = null
@@ -65,23 +68,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                     mMap.uiSettings.isMyLocationButtonEnabled = true
 
                     for(ubicacion in locationResult?.locations!!){
-                        Toast.makeText(applicationContext, ubicacion.latitude.toString() + "," + ubicacion.longitude.toString(), Toast.LENGTH_LONG).show()
-
-                        // Add a marker and move the camera
-                        val ultima_posicion = LatLng(ubicacion.latitude, ubicacion.longitude)
-                        mMap.addMarker(MarkerOptions().position(ultima_posicion).title("¡Aquí estoy!"))
-                        mMap.moveCamera(CameraUpdateFactory.newLatLng(ultima_posicion))
+                            Toast.makeText(applicationContext, ubicacion.latitude.toString() + "," + ubicacion.longitude.toString(), Toast.LENGTH_LONG).show()
+                            if(contador == 0){
+                                // Add a marker and move the camera
+                                val ultima_posicion = LatLng(ubicacion.latitude, ubicacion.longitude)
+                                mMap.addMarker(MarkerOptions().position(ultima_posicion).title("¡Aquí estoy!"))
+                                mMap.moveCamera(CameraUpdateFactory.newLatLng(ultima_posicion))
+                                contador = 1
+                            }
                     }
                 }
-
             }
         }
-
     }
 
     private fun iniciar_el_location_request(){
         locationRequest = LocationRequest()
-        locationRequest?.interval = 1000
+        locationRequest?.interval = 10000
         locationRequest?.fastestInterval = 5000
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
     }
@@ -111,16 +114,35 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     private fun dibujar_las_lineas(){
-     /* var coordenadas = PolygonOptions()
-         .add(LatLng(17.853245116650903, -93.15848618745804))
-         .add(LatLng(17.851502334428435, -93.15631963312626))
-         .add(LatLng(17.848491598824335, -93.1560031324625))
-     */
-        var coordenadas = CircleOptions()
-            .center(LatLng(17.853245116650903, -93.15848618745804))
-            .radius(30.0)
+        var coordenadas_de_lineas = PolylineOptions()
+            .add(LatLng(17.857388663615584, -93.16025376319885))
+            .add(LatLng(17.855553056136316, -93.16238276660442))
+            .add(LatLng(17.854022198624097, -93.16469684243201))
+            .color(Color.CYAN)
+            .width(20f)
+            .pattern(arrayListOf<PatternItem>(Dot(), Gap(10f)))
 
-        mMap.addCircle(coordenadas)
+      var coordenadas_de_poligono = PolygonOptions()
+          .add(LatLng(17.853101826832205, -93.15922547131777))
+          .add(LatLng(17.849145195110186, -93.1583835929632))
+          .add(LatLng(17.84705450831396, -93.15940149128437))
+          .add(LatLng(17.84376412413436, -93.16129513084888))
+          .strokePattern(arrayListOf<PatternItem>(Dash(10f), Gap(10f)))
+          .strokeColor(Color.GREEN)
+          .fillColor(Color.BLUE)
+          .strokeWidth(10f)
+
+        var coordenadas_de_circulo = CircleOptions()
+            .center(LatLng(17.853245116650903, -93.15848618745804))
+            .radius(120.0)
+            .strokePattern(arrayListOf<PatternItem>(Dash(10f), Gap(10f)))
+            .strokeWidth(15f)
+            .strokeColor(Color.MAGENTA)
+            .fillColor(Color.YELLOW)
+
+        mMap.addCircle(coordenadas_de_circulo)
+        mMap.addPolyline(coordenadas_de_lineas)
+        mMap.addPolygon(coordenadas_de_poligono)
  }
 
     private fun cambiar_estilo_del_mapa(){
