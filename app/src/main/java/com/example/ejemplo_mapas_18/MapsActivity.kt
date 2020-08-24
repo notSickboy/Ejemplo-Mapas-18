@@ -8,6 +8,10 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -40,6 +44,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     var contador:Int = 0
 
+    var ultima_posicion:LatLng? = null
+
     // Marcadores de mMap
     private var marcador_combis_de_la_petrolera:Marker? = null
     private var marcador_bodega_aurrera:Marker? = null
@@ -71,8 +77,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                             Toast.makeText(applicationContext, ubicacion.latitude.toString() + "," + ubicacion.longitude.toString(), Toast.LENGTH_LONG).show()
                             if(contador == 0){
                                 // Add a marker and move the camera
-                                val ultima_posicion = LatLng(ubicacion.latitude, ubicacion.longitude)
-                                mMap.addMarker(MarkerOptions().position(ultima_posicion).title("¡Aquí estoy!"))
+                                ultima_posicion = LatLng(ubicacion.latitude, ubicacion.longitude)
+                                mMap.addMarker(MarkerOptions().position(ultima_posicion!!).title("¡Aquí estoy!"))
                                 mMap.moveCamera(CameraUpdateFactory.newLatLng(ultima_posicion))
                                 contador = 1
                             }
@@ -152,6 +158,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         if(!agrega_estilo){
             // Mencionar el error al cambiar el estilo
+            Toast.makeText(applicationContext, "Error al cargar estilo", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -195,6 +202,33 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         marcador_combis_de_la_petrolera?.tag = 2
     }
 
+    private fun preparar_marcadores(){
+        lista_de_marcadores = ArrayList()
+        mMap.setOnMapLongClickListener {
+                location: LatLng? ->
+
+            lista_de_marcadores?.add(mMap.addMarker(MarkerOptions()
+                .position(location!!)
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.mapas_icono))
+                .snippet("Ubicación personalizada")
+                .alpha(0.5F)
+                .title("Sitio personalizado"))
+            )
+            lista_de_marcadores?.last()!!.isDraggable = true
+
+            val coordenadas = LatLng(lista_de_marcadores?.last()!!.position.latitude, lista_de_marcadores?.last()!!.position.longitude)
+
+            val origen = "origin=" + ultima_posicion?.latitude + "," + ultima_posicion?.longitude + "&"
+
+            val destino = "destination=" + coordenadas.latitude + "," + coordenadas.longitude + "&"
+
+            val parametros = origen + destino + "sensor=false&mode=driving"
+
+            Log.d("URL", "https://maps.googleapis.com/maps/api/directions/json?" + parametros + "&key=AIzaSyAjXPplYmkUvnAG8hpH8IDsL66GXVAiTcs")
+            cargar_la_url("https://maps.googleapis.com/maps/api/directions/json?" + parametros + "&key=AIzaSyAjXPplYmkUvnAG8hpH8IDsL66GXVAiTcs")
+        }
+    }
+
     override fun onMarkerDragEnd(marcador: Marker?) {
         Toast.makeText(this,"Terminando de mover el marcador", Toast.LENGTH_LONG).show()
 
@@ -209,23 +243,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     override fun onMarkerDrag(marcador: Marker?) {
         title = marcador?.position?.latitude.toString() + " - " + marcador?.position?.longitude.toString()
-    }
-
-
-    private fun preparar_marcadores(){
-        lista_de_marcadores = ArrayList()
-        mMap.setOnMapLongClickListener {
-            location: LatLng? ->
-
-            lista_de_marcadores?.add(mMap.addMarker(MarkerOptions()
-                    .position(location!!)
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.mapas_icono))
-                    .snippet("Ubicación personalizada")
-                    .alpha(0.5F)
-                    .title("Sitio personalizado"))
-            )
-            lista_de_marcadores?.last()!!.isDraggable = true
-        }
     }
 
     override fun onMarkerClick(marcador: Marker?): Boolean {
@@ -264,7 +281,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     }
 
-    fun solicitarPermiso(){
+    private fun solicitarPermiso(){
         requestPermissions(arrayOf(permisoCoarseLocation,permisoFineLocation),CODIGO_DE_SOLICITUD_DE_PERMISO)
     }
 
@@ -284,6 +301,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     private fun detener_actualizacion_de_ubicacion(){
         fusedLocationClient?.removeLocationUpdates(callback)
+    }
+
+    private fun cargar_la_url(url:String){
+        val queue = Volley.newRequestQueue(this)
+
+        val solicitud = StringRequest(Request.Method.GET, url, Response.Listener<String>{
+            
+            response ->
+            Log.d("HTTP",response)
+            
+        }, Response.ErrorListener{ })
+
+        queue.add(solicitud)
     }
 
     override fun onStart() {
