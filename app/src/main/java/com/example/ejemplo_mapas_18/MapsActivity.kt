@@ -22,6 +22,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
+import com.google.gson.Gson
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener, GoogleMap.OnMarkerDragListener {
@@ -310,11 +311,35 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             
             response ->
             Log.d("HTTP",response)
-            
+
+            val coordenadas = obtener_coordenadas(response)
+
+            mMap.addPolyline(coordenadas)
+
         }, Response.ErrorListener{ })
 
         queue.add(solicitud)
     }
+
+    private fun obtener_coordenadas(json:String):PolylineOptions{
+        val gson = Gson()
+        val objeto = gson.fromJson(json, com.example.ejemplo_mapas_18.Response::class.java)
+
+        val puntos = objeto.routes?.get(0)!!.legs?.get(0)!!.steps!!
+
+        val coordenadas = PolylineOptions()
+
+        for(punto in puntos){
+            coordenadas.add(punto.start_location?.toLatLng())
+            coordenadas.add(punto.end_location?.toLatLng())
+        }
+
+            coordenadas.color(Color.CYAN)
+            .width(15f)
+
+        return coordenadas
+    }
+
 
     override fun onStart() {
         super.onStart()
