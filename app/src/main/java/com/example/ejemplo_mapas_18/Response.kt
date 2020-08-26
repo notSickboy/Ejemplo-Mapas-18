@@ -6,15 +6,15 @@ class Response{
     var routes:ArrayList<Routes>? = null
 }
 
-class Routes{
+class Routes1{
     var legs:ArrayList<Legs>? = null
 }
 
-class Legs{
+class Legs1{
     var steps:ArrayList<Steps>? = null
 }
 
-class Steps{
+class Steps1{
     var end_location:LatLon? = null
     var start_location:LatLon? = null
 }
