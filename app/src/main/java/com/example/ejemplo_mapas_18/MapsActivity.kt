@@ -51,6 +51,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     var ultima_posicion:LatLng? = null
 
+    var ruta_marcada:Polyline? = null
+
     // Marcadores de mMap
     private var marcador_combis_de_la_petrolera:Marker? = null
     private var marcador_bodega_aurrera:Marker? = null
@@ -234,6 +236,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
     }
 
+    // DRAG O SOSTENER MARCADORES, INICIO, DURANTE Y FINAL
+
     override fun onMarkerDragEnd(marcador: Marker?) {
         Toast.makeText(this,"Terminando de mover el marcador", Toast.LENGTH_LONG).show()
 
@@ -324,6 +328,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
 
+    // OBTENER LA UBICACIÓN Y COLOCAR MARCADORES
+
     private inner class mapear_direcciones_json(val url : String) : AsyncTask<Void,Void,List<List<LatLng>>>(){
         override fun doInBackground(vararg params: Void?): List<List<LatLng>> {
             val client = OkHttpClient()
@@ -338,11 +344,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 val path =  ArrayList<LatLng>()
 
                 for (i in 0..(respObj.routes[0].legs?.get(0)?.steps.size-1)){
-//                    val startLatLng = LatLng(respObj.routes[0].legs[0].steps[i].start_location.lat.toDouble()
-//                            ,respObj.routes[0].legs[0].steps[i].start_location.lng.toDouble())
-//                    path.add(startLatLng)
-//                    val endLatLng = LatLng(respObj.routes[0].legs[0].steps[i].end_location.lat.toDouble()
-//                            ,respObj.routes[0].legs[0].steps[i].end_location.lng.toDouble())
                     path.addAll(decodePolyline(respObj.routes[0].legs?.get(0)?.steps?.get(i)?.polyline.points))
                 }
                 result.add(path)
@@ -357,10 +358,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             for (i in result.indices){
                 lineoption.addAll(result[i])
                 lineoption.width(10f)
-                lineoption.color(Color.BLUE)
+                lineoption.color(Color.CYAN)
                 lineoption.geodesic(true)
             }
-            mMap.addPolyline(lineoption)
+
+            if(ruta_marcada != null){
+                ruta_marcada?.remove()
+            }
+            ruta_marcada = mMap.addPolyline(lineoption)
         }
     }
 
